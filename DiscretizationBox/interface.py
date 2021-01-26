@@ -46,33 +46,29 @@ def generate_discretization(gdf, shape = 'hexagons', h3_discretization_level = 6
         area = [shape.area for shape in discretized_gdf.geometry]
         discretized_gdf['area'] = area
   
-        
+    
+    discretized_gdf = reindex(discretized_gdf)
+
     if export_friendly:
         discretized_gdf = to_export_friendly(discretized_gdf)
-
-    #set desired order of columns
-    col = ['area', 'center_lat', 'center_lon', 'neighbors']
-    col = col + [c for c in discretized_gdf.columns if c not in col] # but don't drop any
-    col = col + ['geometry']
-    discretized_gdf = discretized_gdf.reindex(columns=col)
     
     return discretized_gdf
 
-
 def save_gdf(gdf : GeoDataFrame, path, driver = 'ESRI Shapefile'):
     '''
-        Saves the familiar gdf to a file. Driver can be any driver supported by geopandas / fiona. 
+        Saves the familiar gdf to path, using driver. For supported drivers, see geopandas / fiona documentation
     '''
     return to_export_friendly(gdf).to_file(path, driver = driver)
 
 def load_gdf(path, driver = None):
     '''
-        Loads the familiar gdf from file
+        Loads and returns a familiar gdf. If no driver is specified, geopandas tries to use the correct one automatically
     '''
     if driver == None:
-        return from_export_friendly(geopandas.read_file(path).reset_index())
+        return reindex(from_export_friendly(read_file(path).reset_index()))
     else:
-        return from_export_friendly(geopandas.read_file(path, driver = driver).reset_index())
+        return reindex(from_export_friendly(read_file(path, driver = driver).reset_index()))
+
 
 
 def to_export_friendly(gdf : GeoDataFrame):
@@ -81,12 +77,11 @@ def to_export_friendly(gdf : GeoDataFrame):
     '''
 
     #transform list into string separated by -
-    temp_neighbors = ['-'.join(map(str, lista)) for lista in gdf['neighbors']]
-    gdf['neighbors'] = temp_neighbors
+    copy_gdf = gdf.copy()
+    temp_neighbors = ['-'.join(map(str, lista)) for lista in copy_gdf['neighbors']]
+    copy_gdf['neighbors'] = temp_neighbors
 
-    return gdf
-
-    
+    return copy_gdf
 
 
 def from_export_friendly(gdf : GeoDataFrame):
@@ -98,3 +93,9 @@ def from_export_friendly(gdf : GeoDataFrame):
     gdf['neighbors'] = temp_neighbors
     return gdf
 
+def reindex(gdf : GeoDataFrame):
+    #set desired order of columns
+    col = ['geometry', 'area', 'center_lat', 'center_lon', 'neighbors']
+    col = col + [c for c in gdf.columns if c not in col] # but don't drop any
+    re_gdf = gdf.reindex(columns=col)
+    return re_gdf

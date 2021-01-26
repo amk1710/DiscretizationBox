@@ -1,6 +1,6 @@
 
 #__init__.py : include here every symbol that should be exported on the package level, following the format below
-from .interface import generate_discretization, to_export_friendly, from_export_friendly
+from .interface import generate_discretization, save_gdf, load_gdf
 
 from .h3_utils import generate_H3_discretization
 

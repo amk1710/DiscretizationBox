@@ -84,7 +84,7 @@ def generate_H3_discretization(gdf : GeoDataFrame, resolution : int = 7):
         center_points.append(Point(lat_long_center[1], lat_long_center[0]))
 
         hex_ring = h3.hex_ring(hex, k = 1)
-        neighbors.append({hex_indexes.index(neighbor) for neighbor in hex_ring if neighbor in hex_indexes})
+        neighbors.append([hex_indexes.index(neighbor) for neighbor in hex_ring if neighbor in hex_indexes])
         i_n = 0
         i_filled = 0
         for neighbor in hex_ring:

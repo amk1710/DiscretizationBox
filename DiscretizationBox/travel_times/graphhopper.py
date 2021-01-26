@@ -27,9 +27,6 @@ def make_req_gh(from_,to_):
 
 	r = requests.post(base_url_gh(GH_KEY), data=json.dumps(post_data), headers=post_headers)
 	response_data = r.json()
-	if not "times" in response_data:
-		raise RuntimeError("Graphhopper request failed. Have you correctly set your API key? Are you out of credits?")
-	
 	times = response_data["times"]
 	return times
 
