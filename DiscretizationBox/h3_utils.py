@@ -33,12 +33,10 @@ def generate_H3_discretization(gdf : GeoDataFrame, resolution : int = 7):
     if(resolution < 0 or resolution > 15):
         raise ValueError("resolution must be in range [0, 15]. Got {}".format(resolution))
 
+    #the following code assumes epsg = 4326 (lat long coordinate system) to interface with H3
     gdf = gdf.to_crs(epsg=4326) #convert coordinate system to lat long
 
     #maybe do some optional preprocessing to remove unreachable regions such as islands
-
-    #convex_hull = gdf.geometry.convex_hull
-    #temp_list = list(convex_hull[0].exterior.coords) #in the convex hull, there is only one polygon:
 
     #loop through all observation in the geoseries. For every polygon there, compute using h3 the a list of h3 indexes and add it to the hex_indexes structure, used later to construct a new goodataframe
     #this procedure "flattens" the original geoseries, ie, multipolygon's are treated as a sequence of polygon without differentiating them in any way

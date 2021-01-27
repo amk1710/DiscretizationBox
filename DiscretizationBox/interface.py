@@ -3,26 +3,35 @@ from geopandas import GeoDataFrame, read_file
 
 from .h3_utils import generate_H3_discretization
 from .travel_times.graphhopper import distance_matrix_from_gdf
+from .squares import rectangle_discretization
 
 '''
 This file defines functions for ease of use, redirecting to the correct implementation in other files
 '''
 
-def generate_discretization(gdf, shape = 'hexagons', h3_discretization_level = 6, export_friendly = False):
+def generate_discretization(gdf, shape = 'hexagons', *, nx = 10, ny = 10, neighborhood_type = '8', h3_discretization_level = 6, export_friendly = False):
     '''
     Generate an enriched, discretized GeoDataFrame from the original geodataframe. The GeoDataFrame returned should work seamlessly with
         other functions provided within this module.
 
-    Params:
+    Arguments:
         gdf : (string, GeoDataFrame) - a path to a GeoDataFrame or a GeoDataFrame object
         shape : ('rectangles', 'hexagons', 'none', False) - the shape in which the space should be discretized. If 'none' or False, no discretization is done
-        h3_discretization_level - if using 'hexagons', this sets the resolution level passed to the H3 library. A bigger number means smaller hexagons. Valid range [0,15]
+    Keyword only arguments:
+        nx, ny : (int) - if using 'rectangles', define how many subdivision to use on the discretization, on the x and y axis respectively
+        neighborhood : ('8', '4') - if using 'rectangles', defines the type of neighborhood to be added to the returned gdf. See squares.py for further details
+        h3_discretization_level : (int)- if using 'hexagons', this sets the resolution level passed to the H3 library. A bigger number means smaller hexagons. Valid range [0,15]
         export_friendly : (bool) - if True, the returned geodataframe is transformed to contain only columns that can be easily exported
+    Returns:
+        (GeoDataFrame)  - a discretized geodataframe with columns filled as expected by the other functions in this package
+    
     '''
     if(isinstance(gdf, str)):
         gdf = geopandas.read_file(gdf).reset_index()
+        gdf = gdf.to_crs(epsg=4326) #convert coordinate system to lat long
     elif (isinstance(gdf, GeoDataFrame)):
-        pass
+        #for now, we're converting everything to lat long. This may not be strictly necessary but made thing easier for now
+        gdf = gdf.to_crs(epsg=4326) #convert coordinate system to lat long
     else:
         raise TypeError
 
@@ -30,7 +39,7 @@ def generate_discretization(gdf, shape = 'hexagons', h3_discretization_level = 6
     if(shape == 'hexagons'):
         discretized_gdf = generate_H3_discretization(gdf, h3_discretization_level)
     elif(shape == 'rectangles'):
-        raise NotImplementedError
+        discretized_gdf = rectangle_discretization(gdf, nx, ny, neighborhood=neighborhood_type)
     elif shape == 'none' or shape == False:
         discretized_gdf = gdf
         raise NotImplementedError
