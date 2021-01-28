@@ -17,7 +17,7 @@ df = gpd.read_file(os.path.join(ENTR_DATA_PATH,'sh','sh.shp'))
 df.rename({'h3_index':'discr_id'},axis=1,inplace=True)
 discretization = df[['discr_id','geometry']].copy()
 
-def addRegressorWeithedAverage(df : gpd.GeoDataFrame, regressor_df : gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+def addRegressorWeightedAverage(df : gpd.GeoDataFrame, regressor_df : gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
 
     '''

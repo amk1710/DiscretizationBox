@@ -9,7 +9,7 @@ from .squares import rectangle_discretization
 This file defines functions for ease of use, redirecting to the correct implementation in other files
 '''
 
-def generate_discretization(gdf, shape = 'hexagons', *, nx = 10, ny = 10, neighborhood_type = '8', h3_discretization_level = 6, export_friendly = False):
+def generate_discretization(gdf, shape = 'hexagons', *, nx = 10, ny = 10, neighborhood_type = '8', h3_discretization_level = 6, export_friendly = False) -> GeoDataFrame:
     '''
     Generate an enriched, discretized GeoDataFrame from the original geodataframe. The GeoDataFrame returned should work seamlessly with
         other functions provided within this module.
@@ -69,7 +69,7 @@ def save_gdf(gdf : GeoDataFrame, path, driver = 'ESRI Shapefile'):
     '''
     return to_export_friendly(gdf).to_file(path, driver = driver)
 
-def load_gdf(path, driver = None):
+def load_gdf(path, driver = None) -> GeoDataFrame:
     '''
         Loads and returns a familiar gdf. If no driver is specified, geopandas tries to use the correct one automatically
     '''
@@ -80,7 +80,7 @@ def load_gdf(path, driver = None):
 
 
 
-def to_export_friendly(gdf : GeoDataFrame):
+def to_export_friendly(gdf : GeoDataFrame) -> GeoDataFrame:
     '''
         Takes the familiar format for gdf and transforms it into an io friendly format
     '''
@@ -93,7 +93,7 @@ def to_export_friendly(gdf : GeoDataFrame):
     return copy_gdf
 
 
-def from_export_friendly(gdf : GeoDataFrame):
+def from_export_friendly(gdf : GeoDataFrame) -> GeoDataFrame:
     '''
         Detransforms the transformation done by to_export_friendly
     '''
@@ -102,7 +102,7 @@ def from_export_friendly(gdf : GeoDataFrame):
     gdf['neighbors'] = temp_neighbors
     return gdf
 
-def reindex(gdf : GeoDataFrame):
+def reindex(gdf : GeoDataFrame) -> GeoDataFrame:
     #set desired order of columns
     col = ['geometry', 'area', 'center_lat', 'center_lon', 'neighbors']
     col = col + [c for c in gdf.columns if c not in col] # but don't drop any
