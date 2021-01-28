@@ -5,6 +5,8 @@ from .h3_utils import generate_H3_discretization
 from .travel_times.graphhopper import distance_matrix_from_gdf
 from .squares import rectangle_discretization
 
+import numpy as np
+
 '''
 This file defines functions for ease of use, redirecting to the correct implementation in other files
 '''
@@ -42,8 +44,21 @@ def generate_discretization(gdf, shape = 'hexagons', *, nx = 10, ny = 10, neighb
         discretized_gdf = rectangle_discretization(gdf, nx, ny, neighborhood=neighborhood_type)
     elif shape == 'none' or shape == False:
         discretized_gdf = gdf
-        raise NotImplementedError
-        #fill missing columns: center_lon, center_lat, neighbors, area
+        #fill neighbors column using the geometry itself:
+        #be aware, tho: this process is not 100% fail-proof, and is prone to numerical errors!
+        #calculate neighbors:
+        neighborss = []
+        for i, row in discretized_gdf.iterrows():
+            # get indices of 'touching' geometries
+            #print(numpy.flatnonzero(res_intersection[res_intersection.geometry.touches(poly.geometry)]).tolist())
+            neighbors = [i for i in gdf.index[gdf.geometry.touches(row.geometry)]]
+
+            # remove own index of the row itself from the list
+            neighbors = [ index for index in neighbors if i != index ]
+
+            # add names of neighbors as NEIGHBORS value
+            neighborss.append(neighbors)
+        discretized_gdf['neighbors'] = neighborss
 
     #fills center_lat and center_lon
     centers = [shape.centroid for shape in discretized_gdf.geometry]
