@@ -1,6 +1,8 @@
 from geopandas import GeoDataFrame
+import geopandas
 import h3
 from shapely.geometry import Polygon, Point, MultiPolygon
+from warnings import warn
 
 #helper function: gets geojson like (H3 expects as input) from shapely polygon
 def polygon_to_geojson(polygon : Polygon):
@@ -105,7 +107,13 @@ def generate_H3_discretization(gdf : GeoDataFrame, resolution : int = 7):
     #temp_dict['neighbors'] = neighbors
     #for i in range(6):
     #    temp_dict['neighbor'+str(i)] = c_neighbors[i]
+    hex_gdf = GeoDataFrame(temp_dict, crs="EPSG:4326") #crs="EPSG:4326" -> (lat, long) coordinates
 
-    from .interface import to_export_friendly
-    return GeoDataFrame(temp_dict, crs="EPSG:4326") #crs="EPSG:4326" -> (lat, long) coordinates
+    #do i want to later add the option to 'adjust the edges' of the hexagons?
+    #this is still weird because it mixes H3's aproximated edges with actual edges... I'd have to smartly use k-ring or something to get it right. Seems like overkill
+    #uu = GeoDataFrame({'geometry' : geopandas.GeoSeries(gdf.unary_union)}, crs="EPSG:4326")
+    #hex_gdf = geopandas.overlay(hex_gdf, uu, how='intersection')
+    
+    
+    return hex_gdf
 
