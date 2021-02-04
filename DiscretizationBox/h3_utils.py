@@ -57,6 +57,7 @@ def generate_H3_discretization(gdf : GeoDataFrame, resolution : int = 7):
     
     #we have the H3 indexes in hex_indexes. Now we just need to transform them into an geodataframe with any relevant info we may need
     hex_indexes = list(hex_indexes)
+    hex_indexes.sort()
     polygons = []
     pol_areas = []
     neighbors = []
@@ -107,7 +108,7 @@ def generate_H3_discretization(gdf : GeoDataFrame, resolution : int = 7):
     #temp_dict['neighbors'] = neighbors
     #for i in range(6):
     #    temp_dict['neighbor'+str(i)] = c_neighbors[i]
-    hex_gdf = GeoDataFrame(temp_dict, crs="EPSG:4326") #crs="EPSG:4326" -> (lat, long) coordinates
+    hex_gdf = GeoDataFrame(temp_dict, crs="EPSG:4326").reset_index() #crs="EPSG:4326" -> (lat, long) coordinates
 
     #do i want to later add the option to 'adjust the edges' of the hexagons?
     #this is still weird because it mixes H3's aproximated edges with actual edges... I'd have to smartly use k-ring or something to get it right. Seems like overkill

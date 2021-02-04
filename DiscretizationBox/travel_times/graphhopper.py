@@ -4,6 +4,7 @@ import numpy as np
 import urllib.parse
 from itertools import tee
 from geopandas import GeoDataFrame
+import time
 
 GH_KEY = "NOT SET"
 
@@ -20,6 +21,7 @@ def make_req_gh(from_,to_):
 	post_data["to_points"] = to_
 	post_data["out_arrays"] = ["times"]
 	post_data["vehicle"] = "car"
+	post_data["fail_fast"] = False
 
 	post_headers = {"Content-Type" : "application/json"}
 
@@ -27,8 +29,13 @@ def make_req_gh(from_,to_):
 
 	r = requests.post(base_url_gh(GH_KEY), data=json.dumps(post_data), headers=post_headers)
 	response_data = r.json()
-	times = response_data["times"]
-	return times
+	if "times" in response_data:
+		times = response_data["times"]
+		return times
+	else:
+		print(response_data)
+		raise AssertionError("'times' key not in request response")
+		return None
 
 def chunks(coords, k=5):
 	for i in range(0,len(coords),k):
@@ -59,28 +66,32 @@ def gen_distance_matrix_from_file(path):
 
 	return graphhopper_getDistanceMatrix(coords)
 	
-def gen_distance_matrix(coords : list):
+def gen_distance_matrix(coords : list, wait_time = True):
 	'''
 		Use graphhopper requests to fetch distance matrix between origin and destination (lists of lat-long). 
 		The ndarray returned is such that [i,j] indicates the travel time from i to j. Notice that this matrix is *not* symmetric
 
 		Params:
 			coords : list - a list of [longi, lat] lists specifying the coordinates of each point. The retuned matrix follows the index of this list
-
+			wait_time : bool - because of API limitation for non-paying users you might want to wait 1 second per request!
 			return:
 				numpy.ndarray - distance matrix 
 	'''
 	n = len(coords)
 	times = np.zeros((n,n))
-	c_size  = 5
+	c_size  = 39
 	from_ = list(chunks(coords,c_size))
 	to_ = list(chunks(coords, c_size))
+
 
 	
 	chunk_times = {}
 	for i in range(len(from_)):
 		for j in range(len(to_)):
 			chunk_times[(i,j)] = make_req_gh(from_[i], to_[j])
+			if wait_time:
+				time.sleep(60) # wait a *minute*
+
 	
 
 	for i in range(len(from_)):
