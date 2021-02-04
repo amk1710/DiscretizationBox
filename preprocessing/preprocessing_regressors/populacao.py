@@ -1,22 +1,41 @@
 import os
 import pandas as pd
 import geopandas as gpd
+import re
+import string
 
 #  definição de paths
-DATA_PATH = r'C:\Users\Elogroup\GiovanniAmorim\Personal\ProjetoAmbulancias\dados'
+DATA_PATH = 'C:/Users/andrekrauss/Documents/DadosProjetoAmbulancias/'
 
 ENTR_DATA_PATH = os.path.join(DATA_PATH,'1_entrada')
 RAW_FOLDER_PATH = os.path.join(ENTR_DATA_PATH,'regressores','populacao','raw')
 
+def myreplace(s : str):
+    s = s.replace("ç", "c")
+    s = s.replace("á", "a")
+    s = s.replace("à", "a")
+    s = s.replace("ú", "u")
+    s = s.replace("ù", "u")
+    s = s.replace("ó", "o")
+    s = s.replace("ò", "o")
+    s = s.replace("ã", "a")
+    s = s.replace("â", "a")
+    return s
+
 # leitura do dado de populacao por bairros
-population_df = pd.read_excel(os.path.join(RAW_FOLDER_PATH,'2974.xls'),index_col=0)
+population_df = pd.read_excel(os.path.join(RAW_FOLDER_PATH,'2974.xls'))
+
+roman_regex = '^M{0,4}(CM|CD|D?C{0,3})(XC|XL|L?X{0,3})(IX|IV|V?I{0,3})$' # regex for roman numerals
 
 # formatar o dado
 pop_rows = []
 for ind,row in population_df.iterrows():
+    ident = population_df.iloc[ind,0]
     
-    if not (ind in ['Homens','Mulheres']):
-        bairro = ind
+    if ident in ['Homens','Mulheres'] or re.search(roman_regex, ident.split(' ', 1)[0]):
+        continue
+    
+    bairro = ident
     
     r = [bairro,ind]
     for col in population_df.columns:
@@ -63,13 +82,34 @@ population_df2['populacao_idosa'] = (
     population_df2['>=80']
 )
 
-population_df2 = population_df2[['bairro','sexo','populacao_infantil','populacao_jovem_adulta','populacao_adulta','populacao_idosa']].groupby('bairro').sum().reset_index()
+population_df2.drop(labels = ['sexo', 'Bairro'], axis = 1, inplace = True)
+
+#fix weird names
+population_df2['bairro'] = pd.Series(myreplace(s.lower().strip()) for s in population_df2['bairro'])
 
 # leitura dos dados geográficos dos bairros
 bairros_df = gpd.read_file(os.path.join(RAW_FOLDER_PATH,'bairros_rj'))
+#bairros_df = bairros_df[bairros_df.geometry.is_valid] #only keep valid geometries
 bairros_df = bairros_df.set_crs(epsg=29183)
 bairros_df = bairros_df.to_crs(epsg=4326)
 
+#fix weird names
+bairros_df['NOME'] = pd.Series(myreplace(s.lower().strip()) for s in bairros_df['NOME'])
+
+#fix typo in data: w vs v in Oswaldo Cruz!
+bairros_df.loc[bairros_df['NOME'] == 'osvaldo cruz', 'NOME'] = 'oswaldo cruz'
+
+#merge two 'bairros' columns:
+bairros_df = bairros_df.rename(columns={'NOME': 'bairro'})
+
+merge_columns = 'bairro'
+wanted_columns = ['populacao_infantil', 'populacao_jovem_adulta', 'populacao_adulta', 'populacao_idosa']
+
+new_gdf = bairros_df.join(population_df2.set_index(merge_columns), on = merge_columns)
+new_gdf.to_file(os.path.join(ENTR_DATA_PATH,'regressores','populacao','populacao.shp'))
+
+
+'''
 population_rows = []
 for ind,row in population_df2.iterrows():
     bairro = row['bairro']
@@ -84,6 +124,6 @@ for ind,row in population_df2.iterrows():
 
 population_df = gpd.GeoDataFrame(population_rows,columns=['geometry']+list(population_df2.columns))
 population_df = population_df.set_crs('EPSG:4326')
-population_df.drop('bairro',axis=1,inplace=True)
 
 population_df.to_file(os.path.join(ENTR_DATA_PATH,'regressores','populacao','populacao.shp'))
+'''
