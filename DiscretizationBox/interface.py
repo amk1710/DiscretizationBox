@@ -113,7 +113,7 @@ def from_export_friendly(gdf : GeoDataFrame) -> GeoDataFrame:
         Detransforms the transformation done by to_export_friendly
     '''
 
-    temp_neighbors = [list(map(int, mystring.split('-'))) for mystring in gdf['neighbors']]
+    temp_neighbors = [list(map(int, mystring.split('-'))) if mystring else [] for mystring in gdf['neighbors']]
     gdf['neighbors'] = temp_neighbors
     return gdf
 
